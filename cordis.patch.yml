@@ -1,0 +1,5 @@
+# DSH 微信桥接
+# 一行激活：宿主半边（工具 + HTTP 接入 + 桥接进程守护）挂在 lib/index.js。
+- insert:
+    - id: dsh-wechat
+      name: 'dsh-wechat'

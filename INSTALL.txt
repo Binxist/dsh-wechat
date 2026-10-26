@@ -1,0 +1,120 @@
+dsh-wechat 完整包（插件 + 桥接）
+=====================================
+
+这个包里有两个东西，缺一不可：
+
+  plugin\       DSH 插件本体（dsh-wechat 0.1.0）
+  bridge\       微信桥接项目（Python + Node 运行时都在里面，双击就能用）
+
+装好之后：DSH 里能用 wechat_* 工具收发微信，浏览器打开
+http://127.0.0.1:8791/debug 有调试台。
+
+
+一、先决条件
+-------------------------------------
+1. Windows 10/11 x64
+2. 本机装着微信 4.x，并且已登录（4.1.12 以上；4.1.13 / 4.1.15 实测可用）
+3. DeepSeek Harness 桌面版，能打开 GUI
+4. 建议先用小号试：这套东西会用你的微信号真的发消息
+
+
+二、放文件（路径必须纯英文）
+-------------------------------------
+把 bridge\ 整个目录放到一个纯英文路径，例如：
+
+    C:\whale-girl-3.4.9
+
+不要放在 C:\Users\张三\Desktop、D:\我的程序 这种带中文的路径下 ——
+微信的 Qt 无障碍只能在不含非 ASCII 字符的路径里热激活成功，
+否则发送会一直报 error(5, 'SetWindowPos', '拒绝访问')。
+
+把 plugin\ 放到：
+
+    C:\Users\<你>\.dsh\plugins\dsh-wechat
+
+
+三、挂进 DSH
+-------------------------------------
+1. 编辑 C:\Users\<你>\.dsh\profiles\desktop\package.json
+
+   dependencies 里加一行：
+       "dsh-wechat": "link:C:/Users/<你>/.dsh/plugins/dsh-wechat"
+
+   dsh.profile.bundles 数组里加一项：
+       "dsh-wechat"
+
+2. 建目录链接（管理员不需要，普通 cmd 就行）：
+       mklink /J "C:\Users\<你>\.dsh\profiles\desktop\node_modules\dsh-wechat" ^
+                "C:\Users\<你>\.dsh\plugins\dsh-wechat"
+
+3. 重启 DSH（插件不会热重载）
+
+4. 确认工具生效：让模型调 wechat_status，应该看到 bridgeOnline。
+
+
+四、配桥接路径
+-------------------------------------
+1. 编辑 C:\Users\<你>\.dsh\wechat-plugin.json（没有就新建）：
+
+   {
+     "project": "C:\\whale-girl-3.4.9",
+     "webhookPort": 8791,
+     "controlPort": 8792,
+     "allowChats": [],
+     "allowInbound": [],
+     "denyInbound": [],
+     "masters": [],
+     "autoReply": false,
+     "autoReplySession": "",
+     "personaFile": "mcp/persona.md",
+     "replyCooldownSec": 5,
+     "maxRepliesPerHour": 20,
+     "manageBridge": false
+   }
+
+   project 指到第二步放的 bridge 目录。
+
+2. 打开 bridge\config.json，把 gateway.wechat.inboundToken 改成
+   一个只有你知道的随机字符串（保留 "change-me-wechat" 也能跑，
+   但本机任何程序都能往里面灌消息）。
+
+
+五、启动
+-------------------------------------
+顺序：先开 DSH（提供 8791 调试台），再双击
+
+    bridge\启动微信.bat
+
+它会：检查调试台 → 打开浏览器 → 启动桥接（崩溃 5 秒自动重启）。
+
+看到 "开始监听新消息…" 就成了。
+验证：http://127.0.0.1:8791/debug 顶部应该全是绿的；微信里发一句话试试。
+
+
+六、这东西会动你的微信
+-------------------------------------
+- 发送：UIA 自动化（模拟点击/粘贴/回车），不注入 DLL
+- 接收：只读解密本地数据库（密钥从微信进程内存里取）
+- 热激活：往微信进程内存写 1 个字节，打开 Qt 无障碍开关
+
+不联网、不上传。但这仍然不是官方接口，账号风险自负；
+别群发、别做营销、别在公开群放开自动回。
+
+
+七、出问题先看这里
+-------------------------------------
+调试台 404 / 打不开
+    插件没加载，或 DSH 没重启。看 C:\Users\<你>\.dsh\wechat-plugin.log
+
+bridgeOnline: false
+    桥接没起。双击 bridge\启动微信.bat 看窗口里的报错。
+
+uia: false（能收不能发）
+    微信窗口被最小化到托盘、或者热激活失败。把微信窗口点出来，
+    再在调试台看一次；仍然 false 就跑 bridge\tools\uia-diag.py --all
+
+发送报 "错误码 5 / 拒绝访问"
+    路径里有中文，见第二节。
+
+已加载 0/N 个密钥
+    微信没登录，或登录后又重启过。重新登录微信，再重启桥接。

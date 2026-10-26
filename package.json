@@ -1,0 +1,38 @@
+{
+  "name": "dsh-wechat",
+  "version": "0.1.0",
+  "description": "微信桥接（DSH 插件）：把个人微信接进 DSH —— 收发都走工具，桥接进程自己托底，靠 UIA 驱动本机微信客户端",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "wechat",
+    "wechat-bot"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yuuyuko-uu/dsh-wechat.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
